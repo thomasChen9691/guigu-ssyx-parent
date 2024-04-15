@@ -6,6 +6,8 @@ import com.atguigu.ssyx.model.product.SkuAttrValue;
 import com.atguigu.ssyx.model.product.SkuImage;
 import com.atguigu.ssyx.model.product.SkuInfo;
 import com.atguigu.ssyx.model.product.SkuPoster;
+import com.atguigu.ssyx.mq.constant.MqConst;
+import com.atguigu.ssyx.mq.service.RabbitService;
 import com.atguigu.ssyx.product.mapper.SkuInfoMapper;
 import com.atguigu.ssyx.product.service.SkuAttrValueService;
 import com.atguigu.ssyx.product.service.SkuImageService;
@@ -25,6 +27,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -54,6 +57,8 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo> impl
     @Autowired
     private SkuPosterService skuPosterService;
 
+    @Autowired
+    private RabbitService rabbitService;
 
     //添加商品sku信息
     @Override
@@ -176,20 +181,26 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo> impl
     }
 
     //商品上下架
+    @Transactional(rollbackFor = {Exception.class})
     @Override
     public void publish(Long skuId, Integer status) {
-        if(status == 1) { //上架
-            SkuInfo skuInfo = baseMapper.selectById(skuId);
-            skuInfo.setPublishStatus(status);
-            baseMapper.updateById(skuInfo);
-            //整合mq把数据同步到es里面
+        // 更改发布状态
+        if(status == 1) {
+            SkuInfo skuInfoUp = new SkuInfo();
+            skuInfoUp.setId(skuId);
+            skuInfoUp.setPublishStatus(1);
+            baseMapper.updateById(skuInfoUp);
 
-        } else { //下架
-            SkuInfo skuInfo = baseMapper.selectById(skuId);
-            skuInfo.setPublishStatus(status);
-            baseMapper.updateById(skuInfo);
-            //整合mq把数据同步到es里面
+            //商品上架：发送mq消息同步es
+            rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT, MqConst.ROUTING_GOODS_UPPER, skuId);
+        } else {
+            SkuInfo skuInfoUp = new SkuInfo();
+            skuInfoUp.setId(skuId);
+            skuInfoUp.setPublishStatus(0);
+            baseMapper.updateById(skuInfoUp);
 
+            //商品下架：发送mq消息同步es
+            rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT, MqConst.ROUTING_GOODS_LOWER, skuId);
         }
     }
 

@@ -1,6 +1,7 @@
 package com.atguigu.ssyx.search.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.atguigu.ssyx.client.product.ProductFeignClient;
 import com.atguigu.ssyx.enums.SkuType;
 import com.atguigu.ssyx.model.product.Category;
 import com.atguigu.ssyx.model.product.SkuInfo;
@@ -36,16 +37,18 @@ public class SkuServiceImpl implements SkuService {
         log.info("upperSku："+skuId);
         SkuEs skuEs = new SkuEs();
 
-        //查询sku信息
+        //1.通过远程调用，查询sku信息
         SkuInfo skuInfo = productFeignClient.getSkuInfo(skuId);
         if(null == skuInfo) return;
 
         // 查询分类
         Category category = productFeignClient.getCategory(skuInfo.getCategoryId());
+        //获取数据封装SkuEs对象
         if (category != null) {
             skuEs.setCategoryId(category.getId());
             skuEs.setCategoryName(category.getName());
         }
+        //封装SkuEs信息部分
         skuEs.setId(skuInfo.getId());
         skuEs.setKeyword(skuInfo.getSkuName()+","+skuEs.getCategoryName());
         skuEs.setWareId(skuInfo.getWareId());
@@ -62,6 +65,7 @@ public class SkuServiceImpl implements SkuService {
             //TODO 待完善-秒杀商品
 
         }
+        //3.调用方法，添加ES
         SkuEs save = skuEsRepository.save(skuEs);
         log.info("upperSku："+JSON.toJSONString(save));
     }
