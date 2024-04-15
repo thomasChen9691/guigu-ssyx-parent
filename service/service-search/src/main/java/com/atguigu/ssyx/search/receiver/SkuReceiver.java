@@ -1,6 +1,7 @@
 package com.atguigu.ssyx.search.receiver;
 
-import com.atguigu.ssyx.common.constant.MqConst;
+
+import com.atguigu.ssyx.mq.constant.MqConst;
 import com.atguigu.ssyx.search.service.SkuService;
 import com.rabbitmq.client.Channel;
 import org.springframework.amqp.core.Message;
