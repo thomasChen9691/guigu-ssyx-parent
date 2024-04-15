@@ -12,7 +12,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/shequ-product?characterEncoding=utf-8&useSSL=false
     username: root
-    password: root
+    password: 123
 
   rabbitmq:
     host: 192.168.56.101
@@ -42,7 +42,7 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
 aliyun:
-  endpoint: oss-cn-beijing.aliyuncs.com
-  keyid: LTAI5tK6q6QVDqZAY3mD4s9s
-  keysecret: lCaDcmvm7AvfvJ2BhC6456lufHRFgM
-  bucketname: ssyx-guigu
+  endpoint: oss-cn-wuhan-lr.aliyuncs.com
+  keyid: LTAI5tGbre8bv5Qb7JJHjHJw
+  keysecret: cNijUpwOMXWnWT5JPfncy5nS0lzxHZ
+  bucketname: ssyx-tguigu
