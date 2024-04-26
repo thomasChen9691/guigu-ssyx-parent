@@ -1,4 +1,4 @@
-package com.atguigu.ssyx.search.service.impl;
+package com.atguigu.ssyx.search.service.Impl;
 
 import com.alibaba.fastjson.JSON;
 import com.atguigu.ssyx.client.product.ProductFeignClient;
