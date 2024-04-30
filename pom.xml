@@ -93,14 +93,15 @@
                 <artifactId>easyexcel</artifactId>
                 <version>${easyexcel.version}</version>
                 <scope>system</scope>
-                <systemPath>F:/javaLearn/ssyx/guigu-ssyx-parent/guigu-ssyx-parent/lib/easyexcel-3.1.0.jar</systemPath>
+                <systemPath>F:/javaLearn/ssyx/guigu-ssyx-parent/lib/easyexcel-3.1.0.jar</systemPath>
+
             </dependency>
             <dependency>
                 <groupId>com.aliyun</groupId>
                 <artifactId>aliyun-java-sdk-core</artifactId>
                 <version>${aliyun.version}</version>
                 <scope>system</scope>
-                <systemPath>F:/javaLearn/ssyx/guigu-ssyx-parent/guigu-ssyx-parent/lib/aliyun-java-sdk-core-4.1.1.jar</systemPath>
+                <systemPath>F:/javaLearn/ssyx/guigu-ssyx-parent/lib/aliyun-java-sdk-core-4.1.1.jar</systemPath>
             </dependency>
             <!--日期时间工具-->
             <dependency>
@@ -113,7 +114,7 @@
                 <artifactId>xxl-job-core</artifactId>
                 <version>${xxl-job.version}</version>
                 <scope>system</scope>
-                <systemPath>F:/javaLearn/ssyx/guigu-ssyx-parent/guigu-ssyx-parent/lib/xxl-job-core-2.3.0.jar</systemPath>
+                <systemPath>F:/javaLearn/ssyx/guigu-ssyx-parent/lib/xxl-job-core-2.3.0.jar</systemPath>
             </dependency>
         </dependencies>
     </dependencyManagement>
