@@ -5,7 +5,7 @@
     <resultMap id="ActivityRuleMap" type="com.atguigu.ssyx.model.activity.ActivityRule" autoMapping="true"></resultMap>
     <resultMap id="ActivitySkuMap" type="com.atguigu.ssyx.model.activity.ActivitySku" autoMapping="true"></resultMap>
 
-    <select id="selectExistSkuIdList" resultType="Long">
+    <select id="selectExistSkuIdList" resultType="java.lang.Long">
         select
         sku.sku_id
         from `shequ-activity`.activity_info info
