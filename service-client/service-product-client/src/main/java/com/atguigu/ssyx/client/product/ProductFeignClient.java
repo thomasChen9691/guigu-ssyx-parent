@@ -13,6 +13,20 @@ import java.util.List;
 @FeignClient(value = "service-product")
 public interface ProductFeignClient {
 
+    /**
+     * 获取分类信息
+     * @return
+     */
+    @GetMapping("/api/product/inner/findAllCategoryList")
+    List<Category> findAllCategoryList();
+
+    /**
+     * 获取新人专享
+     * @return
+     */
+    @GetMapping("/api/product/inner/findNewPersonSkuInfoList")
+    List<SkuInfo> findNewPersonSkuInfoList();
+
     @GetMapping("/api/product/inner/getCategory/{categoryId}")
     public Category getCategory(@PathVariable("categoryId") Long categoryId);
 

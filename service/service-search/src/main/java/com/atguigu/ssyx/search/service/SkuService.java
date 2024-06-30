@@ -21,4 +21,10 @@ public interface SkuService {
      * @param skuId
      */
     void lowerSku(Long skuId);
+
+    /**
+     * 获取爆品商品
+     * @param
+     */
+    List<SkuEs> findHotSkuList();
 }

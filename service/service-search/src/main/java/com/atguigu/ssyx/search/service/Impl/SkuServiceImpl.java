@@ -12,8 +12,11 @@ import com.atguigu.ssyx.search.service.SkuService;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -77,5 +80,12 @@ public class SkuServiceImpl implements SkuService {
     @Override
     public void lowerSku(Long skuId) {
         this.skuEsRepository.deleteById(skuId);
+    }
+
+    //获取爆品商品
+    @Override
+    public List<SkuEs> findHotSkuList() {
+        Pageable pageable = PageRequest.of(0, 10);
+        return skuEsRepository.findByOrderByHotScoreDesc(pageable).getContent();
     }
 }

@@ -72,7 +72,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         userLoginVo.setOpenId(user.getOpenId());
         userLoginVo.setIsNew(user.getIsNew());
 
-        //如果是团长获取当前前团长id与对应的仓库id
+/*        //如果是团长获取当前前团长id与对应的仓库id
         if(user.getUserType() == UserType.LEADER) {
             LambdaQueryWrapper<Leader> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(Leader::getUserId, userId);
@@ -96,6 +96,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 userLoginVo.setLeaderId(1L);
                 userLoginVo.setWareId(1L);
             }
+        }
+        return userLoginVo;*/
+        UserDelivery userDelivery = userDeliveryMapper.selectOne(
+                new LambdaQueryWrapper<UserDelivery>().eq(UserDelivery::getUserId, userId)
+                        .eq(UserDelivery::getIsDefault, 1)
+        );
+        if(userDelivery != null) {
+            userLoginVo.setLeaderId(userDelivery.getLeaderId());
+            userLoginVo.setWareId(userDelivery.getWareId());
+        } else {
+            userLoginVo.setLeaderId(1L);
+            userLoginVo.setWareId(1L);
         }
         return userLoginVo;
     }
