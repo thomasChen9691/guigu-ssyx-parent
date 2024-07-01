@@ -29,7 +29,7 @@
         </dependency>
         <dependency>
             <groupId>com.atguigu</groupId>
-            <artifactId>service-product-client</artifactId>
+            <artifactId>service-activity-client</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

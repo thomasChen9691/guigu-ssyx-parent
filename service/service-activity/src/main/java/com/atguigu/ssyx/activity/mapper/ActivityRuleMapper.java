@@ -1,6 +1,5 @@
 package com.atguigu.ssyx.activity.mapper;
 
-
 import com.atguigu.ssyx.model.activity.ActivityRule;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.springframework.stereotype.Repository;
@@ -11,7 +10,7 @@ import org.springframework.stereotype.Repository;
  * </p>
  *
  * @author atguigu
- * @since 2024-04-25
+ * @since 2023-04-07
  */
 @Repository
 public interface ActivityRuleMapper extends BaseMapper<ActivityRule> {

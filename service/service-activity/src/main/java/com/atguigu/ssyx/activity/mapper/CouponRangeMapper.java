@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
  * </p>
  *
  * @author atguigu
- * @since 2024-04-25
+ * @since 2023-04-07
  */
 @Repository
 public interface CouponRangeMapper extends BaseMapper<CouponRange> {
