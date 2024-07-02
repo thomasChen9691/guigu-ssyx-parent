@@ -1,4 +1,4 @@
-package com.atguigu.ssyx.search.service.impl;
+package com.atguigu.ssyx.search.service.Impl;
 
 import com.atguigu.ssyx.activity.client.ActivityFeignClient;
 import com.atguigu.ssyx.client.product.ProductFeignClient;

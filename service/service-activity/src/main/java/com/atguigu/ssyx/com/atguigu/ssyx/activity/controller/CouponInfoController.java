@@ -1,4 +1,4 @@
-package com.atguigu.ssyx.activity.controller;
+package com.atguigu.ssyx.com.atguigu.ssyx.activity.controller;
 
 
 import com.atguigu.ssyx.activity.service.CouponInfoService;
