@@ -1,5 +1,6 @@
 package com.atguigu.ssyx.product.service.impl;
 
+import com.atguigu.ssyx.common.constant.RedisConst;
 import com.atguigu.ssyx.common.exception.SsyxException;
 import com.atguigu.ssyx.common.result.ResultCodeEnum;
 import com.atguigu.ssyx.model.product.SkuAttrValue;
@@ -27,7 +28,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -59,6 +59,12 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo> impl
 
     @Autowired
     private RabbitService rabbitService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Autowired
+    private RedissonClient redissonClient;
 
     //添加商品sku信息
     @Override
@@ -181,26 +187,24 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo> impl
     }
 
     //商品上下架
-    @Transactional(rollbackFor = {Exception.class})
     @Override
     public void publish(Long skuId, Integer status) {
-        // 更改发布状态
-        if(status == 1) {
-            SkuInfo skuInfoUp = new SkuInfo();
-            skuInfoUp.setId(skuId);
-            skuInfoUp.setPublishStatus(1);
-            baseMapper.updateById(skuInfoUp);
-
-            //商品上架：发送mq消息同步es
-            rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT, MqConst.ROUTING_GOODS_UPPER, skuId);
-        } else {
-            SkuInfo skuInfoUp = new SkuInfo();
-            skuInfoUp.setId(skuId);
-            skuInfoUp.setPublishStatus(0);
-            baseMapper.updateById(skuInfoUp);
-
-            //商品下架：发送mq消息同步es
-            rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT, MqConst.ROUTING_GOODS_LOWER, skuId);
+        if(status == 1) { //上架
+            SkuInfo skuInfo = baseMapper.selectById(skuId);
+            skuInfo.setPublishStatus(status);
+            baseMapper.updateById(skuInfo);
+            //整合mq把数据同步到es里面
+            rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT,
+                                      MqConst.ROUTING_GOODS_UPPER,
+                                      skuId);
+        } else { //下架
+            SkuInfo skuInfo = baseMapper.selectById(skuId);
+            skuInfo.setPublishStatus(status);
+            baseMapper.updateById(skuInfo);
+            //整合mq把数据同步到es里面
+            rabbitService.sendMessage(MqConst.EXCHANGE_GOODS_DIRECT,
+                                      MqConst.ROUTING_GOODS_LOWER,
+                                      skuId);
         }
     }
 
@@ -274,16 +278,88 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoMapper, SkuInfo> impl
         return skuInfoVo;
     }
 
+    //验证和锁定库存
     @Override
-    public Boolean checkAndLock(List<SkuStockLockVo> skuStockLockVoList, String orderNo) {
-        return null;
+    public Boolean checkAndLock(List<SkuStockLockVo> skuStockLockVoList,
+                                String orderNo) {
+        //1 判断skuStockLockVoList集合是否为空
+        if(CollectionUtils.isEmpty(skuStockLockVoList)) {
+            throw new SsyxException(ResultCodeEnum.DATA_ERROR);
+        }
+
+        //2 遍历skuStockLockVoList得到每个商品，验证库存并锁定库存，具备原子性
+        skuStockLockVoList.stream().forEach(skuStockLockVo -> {
+            this.checkLock(skuStockLockVo);
+        });
+
+        //3 只要有一个商品锁定失败，所有锁定成功的商品都解锁
+        boolean flag = skuStockLockVoList.stream()
+                .anyMatch(skuStockLockVo -> !skuStockLockVo.getIsLock());
+        if(flag) {
+            //所有锁定成功的商品都解锁
+            skuStockLockVoList.stream().filter(SkuStockLockVo::getIsLock)
+                    .forEach(skuStockLockVo -> {
+                        baseMapper.unlockStock(skuStockLockVo.getSkuId(),
+                                skuStockLockVo.getSkuNum());
+                    });
+            //返回失败的状态
+            return false;
+        }
+
+        //4 如果所有商品都锁定成功了，redis缓存相关数据，为了方便后面解锁和减库存
+        redisTemplate.opsForValue()
+                .set(RedisConst.SROCK_INFO+orderNo,skuStockLockVoList);
+        return true;
     }
 
+    //扣减库存成功，更新订单状态
     @Override
     public void minusStock(String orderNo) {
+        //从redis获取锁定库存信息
+        List<SkuStockLockVo> skuStockLockVoList =
+                (List<SkuStockLockVo>)redisTemplate.opsForValue().get(RedisConst.SROCK_INFO + orderNo);
+        if(CollectionUtils.isEmpty(skuStockLockVoList)) {
+            return;
+        }
+        //遍历集合，得到每个对象，减库存
+        skuStockLockVoList.forEach(skuStockLockVo -> {
+            baseMapper.minusStock(skuStockLockVo.getSkuId(),skuStockLockVo.getSkuNum());
+        });
 
+        //删除redis数据
+        redisTemplate.delete(RedisConst.SROCK_INFO + orderNo);
     }
 
+    //2 遍历skuStockLockVoList得到每个商品，验证库存并锁定库存，具备原子性
+    private void checkLock(SkuStockLockVo skuStockLockVo) {
+        //获取锁
+        //公平锁
+        RLock rLock =
+                this.redissonClient.getFairLock(RedisConst.SKUKEY_PREFIX + skuStockLockVo.getSkuId());
+        //加锁
+        rLock.lock();
+
+        try {
+            //验证库存
+            SkuInfo skuInfo =
+                    baseMapper.checkStock(skuStockLockVo.getSkuId(),skuStockLockVo.getSkuNum());
+            //判断没有满足条件商品，设置isLock值false，返回
+            if(skuInfo == null) {
+                skuStockLockVo.setIsLock(false);
+                return;
+            }
+            //有满足条件商品
+            //锁定库存:update
+            Integer rows =
+                    baseMapper.lockStock(skuStockLockVo.getSkuId(),skuStockLockVo.getSkuNum());
+            if(rows == 1) {
+                skuStockLockVo.setIsLock(true);
+            }
+        } finally {
+            //解锁
+            rLock.unlock();
+        }
+    }
 
     //sku列表
     @Override

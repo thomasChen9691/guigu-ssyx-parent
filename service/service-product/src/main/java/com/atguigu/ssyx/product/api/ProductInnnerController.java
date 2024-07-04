@@ -81,6 +81,4 @@ public class ProductInnnerController {
                                 @PathVariable String orderNo) {
         return skuInfoService.checkAndLock(skuStockLockVoList,orderNo);
     }
-
-
 }

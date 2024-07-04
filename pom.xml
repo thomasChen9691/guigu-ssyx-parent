@@ -16,6 +16,8 @@
         <module>service-gateway</module>
         <module>service-client/service-activity-client</module>
         <module>service/service-cart</module>
+        <module>service/service-order</module>
+        <module>service-client/service-cart-client</module>
     </modules>
 
     <parent>
