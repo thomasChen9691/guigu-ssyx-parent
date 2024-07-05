@@ -18,6 +18,8 @@
         <module>service/service-cart</module>
         <module>service/service-order</module>
         <module>service-client/service-cart-client</module>
+        <module>service/service-payment</module>
+        <module>service-client/service-order-client</module>
     </modules>
 
     <parent>

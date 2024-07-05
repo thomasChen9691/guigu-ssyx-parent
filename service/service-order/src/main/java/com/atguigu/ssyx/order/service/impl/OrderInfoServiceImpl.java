@@ -136,7 +136,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         // 比如仓库有10个西红柿，我想买2个西红柿
         // ** 验证库存，查询仓库里面是是否有充足西红柿
         // ** 库存充足，库存锁定 2锁定（目前没有真正减库存）
-        //1、远程调用service-cart模块，获取当前用户购物车商品（选中的购物项）
+        //1、远程调用service-cart模块，获取当前用户购物车商品（ 选中的购物项）
         List<CartInfo> cartInfoList =
                         cartFeignClient.getCartCheckedList(userId);
 
