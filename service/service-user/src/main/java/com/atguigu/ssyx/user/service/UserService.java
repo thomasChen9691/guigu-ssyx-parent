@@ -6,20 +6,12 @@ import com.atguigu.ssyx.vo.user.UserLoginVo;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 public interface UserService extends IService<User> {
+    //// 判断是否是第一次使用微信授权登录：如何判断？openId
+    User getUserByOpenId(String openid);
 
-    LeaderAddressVo getLeaderAddressVoByUserId(Long userId);
+    //5 根据userId查询提货点和团长信息
+    LeaderAddressVo getLeaderAddressByUserId(Long userId);
 
-    /**
-     * 根据微信openid获取用户信息
-     * @param openId
-     * @return
-     */
-    User getByOpenid(String openId);
-
-    /**
-     * 获取当前登录用户信息
-     * @param userId
-     * @return
-     */
-    UserLoginVo getUserLoginVo(Long userId);
+    //7 获取当前登录用户信息，
+    UserLoginVo getUserLoginVo(Long id);
 }

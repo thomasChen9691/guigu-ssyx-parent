@@ -1,51 +1,54 @@
 package com.atguigu.ssyx.user.service.impl;
 
-
-import com.atguigu.ssyx.enums.UserType;
-import com.atguigu.ssyx.user.mapper.LeaderMapper;
-import com.atguigu.ssyx.user.mapper.UserDeliveryMapper;
-import com.atguigu.ssyx.user.mapper.UserMapper;
 import com.atguigu.ssyx.model.user.Leader;
 import com.atguigu.ssyx.model.user.User;
 import com.atguigu.ssyx.model.user.UserDelivery;
+import com.atguigu.ssyx.user.mapper.LeaderMapper;
+import com.atguigu.ssyx.user.mapper.UserDeliveryMapper;
+import com.atguigu.ssyx.user.mapper.UserMapper;
 import com.atguigu.ssyx.user.service.UserService;
 import com.atguigu.ssyx.vo.user.LeaderAddressVo;
 import com.atguigu.ssyx.vo.user.UserLoginVo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
-
 @Service
-@SuppressWarnings({"unchecked", "rawtypes"})
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
-    @Resource
-    private UserMapper userMapper;
-
-    @Resource
+    @Autowired
     private UserDeliveryMapper userDeliveryMapper;
 
-    @Resource
+    @Autowired
     private LeaderMapper leaderMapper;
 
-    @Resource
-    private RegionFeignClient regionFeignClient;
-
+    //// 判断是否是第一次使用微信授权登录：如何判断？openId
     @Override
-    public LeaderAddressVo getLeaderAddressVoByUserId(Long userId) {
-        //根据用户id查询用户默认收货地址
-        LambdaQueryWrapper<UserDelivery> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(UserDelivery::getUserId, userId);
-        queryWrapper.eq(UserDelivery::getIsDefault, 1);
-        UserDelivery userDelivery = userDeliveryMapper.selectOne(queryWrapper);
-        if(null == userDelivery) return null;
+    public User getUserByOpenId(String openid) {
+        User user = baseMapper.selectOne(
+                new LambdaQueryWrapper<User>().eq(User::getOpenId, openid)
+        );
+        return user;
+    }
 
+    //5 根据userId查询提货点和团长信息
+    @Override
+    public LeaderAddressVo getLeaderAddressByUserId(Long userId) {
+        //根据userId查询用户默认的团长id
+        UserDelivery userDelivery = userDeliveryMapper.selectOne(
+                new LambdaQueryWrapper<UserDelivery>()
+                        .eq(UserDelivery::getUserId, userId)
+                        .eq(UserDelivery::getIsDefault, 1)
+        );
+        if(userDelivery == null) {
+            return null;
+        }
+        //拿着上面查询团长id查询leader表查询团长其他信息
         Leader leader = leaderMapper.selectById(userDelivery.getLeaderId());
-        //封装到vo
+        //封装数据到LeaderAddressVo
         LeaderAddressVo leaderAddressVo = new LeaderAddressVo();
         BeanUtils.copyProperties(leader, leaderAddressVo);
         leaderAddressVo.setUserId(userId);
@@ -57,49 +60,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return leaderAddressVo;
     }
 
+    //7 获取当前登录用户信息，
     @Override
-    public User getByOpenid(String openId) {
-        return userMapper.selectOne(new QueryWrapper<User>().eq("open_id", openId));
-    }
-
-    @Override
-    public UserLoginVo getUserLoginVo(Long userId) {
+    public UserLoginVo getUserLoginVo(Long id) {
+        User user = baseMapper.selectById(id);
         UserLoginVo userLoginVo = new UserLoginVo();
-        User user = this.getById(userId);
+        userLoginVo.setUserId(id);
         userLoginVo.setNickName(user.getNickName());
-        userLoginVo.setUserId(userId);
         userLoginVo.setPhotoUrl(user.getPhotoUrl());
-        userLoginVo.setOpenId(user.getOpenId());
         userLoginVo.setIsNew(user.getIsNew());
+        userLoginVo.setOpenId(user.getOpenId());
 
-/*        //如果是团长获取当前前团长id与对应的仓库id
-        if(user.getUserType() == UserType.LEADER) {
-            LambdaQueryWrapper<Leader> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(Leader::getUserId, userId);
-            queryWrapper.eq(Leader::getCheckStatus, 1);
-            Leader leader = leaderMapper.selectOne(queryWrapper);
-            if(null != leader) {
-                userLoginVo.setLeaderId(leader.getId());
-                Long wareId = regionFeignClient.getWareId(leader.getRegionId());
-                userLoginVo.setWareId(wareId);
-            }
-        } else {
-            //如果是会员获取当前会员对应的仓库id
-            LambdaQueryWrapper<UserDelivery> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(UserDelivery::getUserId, userId);
-            queryWrapper.eq(UserDelivery::getIsDefault, 1);
-            UserDelivery userDelivery = userDeliveryMapper.selectOne(queryWrapper);
-            if(null != userDelivery) {
-                userLoginVo.setLeaderId(userDelivery.getLeaderId());
-                userLoginVo.setWareId(userDelivery.getWareId());
-            } else {
-                userLoginVo.setLeaderId(1L);
-                userLoginVo.setWareId(1L);
-            }
-        }
-        return userLoginVo;*/
         UserDelivery userDelivery = userDeliveryMapper.selectOne(
-                new LambdaQueryWrapper<UserDelivery>().eq(UserDelivery::getUserId, userId)
+                new LambdaQueryWrapper<UserDelivery>().eq(UserDelivery::getUserId, id)
                         .eq(UserDelivery::getIsDefault, 1)
         );
         if(userDelivery != null) {

@@ -19,13 +19,13 @@
         <module>service-activity</module>
         <module>service-user</module>
         <module>service-home</module>
-        <!--<module>service-search</module>
+        <module>service-search</module>
         <module>service-activity</module>
         <module>service-user</module>
         <module>service-home</module>
         <module>service-cart</module>
         <module>service-order</module>
-        <module>service-payment</module>-->
+        <module>service-payment</module>
     </modules>
 
     <dependencies>
